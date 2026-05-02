@@ -31,7 +31,7 @@ The Streamlit dashboard, with live preview and counts plotted as the video plays
 
 ![dashboard](docs/img/dashboard.png)
 
-> The screenshots above were rendered programmatically against synthetic backgrounds so the repo is self-contained. Drop in your own footage and you'll get the same overlays on real frames.
+> The first two screenshots are real captures from running this codebase on a public traffic clip ([intel-iot-devkit/sample-videos](https://github.com/intel-iot-devkit/sample-videos), MIT). Reproduce them with `python scripts/capture_real_screenshots.py` — the script auto-downloads the clip and the YOLOv8n weights. The dashboard image is a composed mockup of the Streamlit layout using the real tracking frame as its preview.
 
 ## Getting started
 
