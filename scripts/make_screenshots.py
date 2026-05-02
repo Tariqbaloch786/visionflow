@@ -21,7 +21,6 @@ from visionflow.config import HeatmapConfig, LineConfig
 from visionflow.tracker import Track
 from visionflow.visualization import draw_hud, draw_lines, draw_tracks
 
-
 W, H = 1280, 720
 OUT = ROOT / "docs" / "img"
 OUT.mkdir(parents=True, exist_ok=True)

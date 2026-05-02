@@ -13,13 +13,13 @@ import urllib.request
 from pathlib import Path
 
 import cv2
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 SAMPLE_URL = (
-    "https://github.com/intel-iot-devkit/sample-videos/raw/master/"
-    "person-bicycle-car-detection.mp4"
+    "https://media.roboflow.com/supervision/video-examples/vehicles.mp4"
 )
 
 from visionflow.config import (  # noqa: E402
@@ -33,7 +33,8 @@ from visionflow.config import (  # noqa: E402
 from visionflow.pipeline import Pipeline  # noqa: E402
 from visionflow.visualization import draw_hud  # noqa: E402
 
-VIDEO = ROOT / "data" / "traffic.mp4"
+VIDEO_RAW = ROOT / "data" / "traffic.mp4"
+VIDEO = ROOT / "data" / "traffic_720.mp4"
 OUT = ROOT / "docs" / "img"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -43,17 +44,28 @@ def build_config(heatmap: bool) -> PipelineConfig:
         source=str(VIDEO),
         detector=DetectorConfig(
             weights="yolov8n.pt",
-            conf=0.25,
+            conf=0.30,
             iou=0.45,
-            classes=[0, 1, 2, 3, 5, 7],
+            classes=[2, 3, 5, 7],   # car, motorbike, bus, truck — vehicles only
             imgsz=640,
             device="cpu",
         ),
-        tracker=TrackerConfig(iou_threshold=0.30, max_age=20, min_hits=2),
-        lines=[LineConfig(name="counts", start=(20, 280), end=(748, 280))],
-        heatmap=HeatmapConfig(enabled=heatmap, decay=0.96, radius=22, alpha=0.55),
+        tracker=TrackerConfig(iou_threshold=0.30, max_age=25, min_hits=2),
+        lines=[LineConfig(name="counts", start=(40, 430), end=(1240, 430))],
+        heatmap=HeatmapConfig(enabled=heatmap, decay=0.985, radius=28, alpha=0.55),
         output=OutputConfig(show=False),
     )
+
+
+SCREENSHOT_W = 1280
+
+
+def _resize_for_web(frame: np.ndarray) -> np.ndarray:
+    h, w = frame.shape[:2]
+    if w <= SCREENSHOT_W:
+        return frame
+    new_h = int(h * SCREENSHOT_W / w)
+    return cv2.resize(frame, (SCREENSHOT_W, new_h), interpolation=cv2.INTER_AREA)
 
 
 def capture_pass(label: str, target_frame: int, save_as: Path,
@@ -69,14 +81,14 @@ def capture_pass(label: str, target_frame: int, save_as: Path,
                 extras.append(f"{c.config.name}: in={c.in_count} out={c.out_count}")
             annotated = draw_hud(frame, pipeline._fps_ema, len(tracks),  # noqa: SLF001
                                  extra=extras)
-            cv2.imwrite(str(save_as), annotated)
+            cv2.imwrite(str(save_as), _resize_for_web(annotated))
             print(f"[{label}] saved {save_as.name}  tracks={len(tracks)}  "
                   f"fps_ema={pipeline._fps_ema:.1f}")  # noqa: SLF001
             return
     if last_frame is not None:
         idx, frame, tracks = last_frame
         annotated = draw_hud(frame, pipeline._fps_ema, len(tracks))  # noqa: SLF001
-        cv2.imwrite(str(save_as), annotated)
+        cv2.imwrite(str(save_as), _resize_for_web(annotated))
         print(f"[{label}] video ended at frame {idx}; saved {save_as.name}")
 
 
@@ -166,17 +178,74 @@ def ensure_video() -> None:
     if VIDEO.exists():
         return
     VIDEO.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Downloading sample video to {VIDEO} ...")
-    urllib.request.urlretrieve(SAMPLE_URL, VIDEO)
-    print(f"Got {VIDEO.stat().st_size // 1024} KB")
+    if not VIDEO_RAW.exists():
+        print(f"Downloading sample video to {VIDEO_RAW} ...")
+        urllib.request.urlretrieve(SAMPLE_URL, VIDEO_RAW)
+        print(f"Got {VIDEO_RAW.stat().st_size // 1024} KB")
+    print(f"Downscaling to 720p -> {VIDEO}")
+    src = cv2.VideoCapture(str(VIDEO_RAW))
+    w, h = int(src.get(3)), int(src.get(4))
+    fps = src.get(5)
+    new_w = 1280
+    new_h = int(h * new_w / w)
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    dst = cv2.VideoWriter(str(VIDEO), fourcc, fps, (new_w, new_h))
+    while True:
+        ok, fr = src.read()
+        if not ok:
+            break
+        dst.write(cv2.resize(fr, (new_w, new_h), interpolation=cv2.INTER_AREA))
+    src.release()
+    dst.release()
+
+
+def render_gif(out_path: Path, start_frame: int, end_frame: int,
+               every_n: int = 2, gif_width: int = 720) -> None:
+    """Run the pipeline and save selected frames as an animated GIF."""
+    from PIL import Image  # local import; only needed for GIF
+
+    print(f"[gif] capturing frames {start_frame}..{end_frame} every {every_n}")
+    pipeline = Pipeline(build_config(heatmap=False))
+    images: list[Image.Image] = []
+    for idx, frame, tracks, _speeds in pipeline.stream():
+        if idx < start_frame:
+            continue
+        if idx > end_frame:
+            break
+        if (idx - start_frame) % every_n != 0:
+            continue
+        extras = []
+        for c in pipeline.line_counters:
+            extras.append(f"{c.config.name}: in={c.in_count} out={c.out_count}")
+        annotated = draw_hud(frame, pipeline._fps_ema, len(tracks), extra=extras)  # noqa: SLF001
+        h, w = annotated.shape[:2]
+        new_h = int(h * gif_width / w)
+        small = cv2.resize(annotated, (gif_width, new_h), interpolation=cv2.INTER_AREA)
+        rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+        images.append(Image.fromarray(rgb))
+    if not images:
+        print("[gif] no frames captured")
+        return
+    palette = images[0].quantize(colors=128, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    quantized = [im.quantize(palette=palette, dither=Image.Dither.NONE) for im in images]
+    quantized[0].save(
+        out_path,
+        save_all=True,
+        append_images=quantized[1:],
+        duration=140,
+        loop=0,
+        optimize=True,
+    )
+    size_kb = out_path.stat().st_size // 1024
+    print(f"[gif] saved {out_path.name} ({len(images)} frames, {size_kb} KB)")
 
 
 def main() -> None:
     ensure_video()
 
-    capture_pass("tracking", target_frame=329,
+    capture_pass("tracking", target_frame=48,
                  save_as=OUT / "tracking.png", heatmap=False)
-    capture_pass("heatmap",  target_frame=580,
+    capture_pass("heatmap",  target_frame=120,
                  save_as=OUT / "heatmap.png",  heatmap=True)
 
     metrics = {"active_tracks": "?", "fps": "?", "in": "?", "out": "?"}
@@ -192,6 +261,9 @@ def main() -> None:
         metrics["out"] = str(c.out_count)
 
     render_dashboard(OUT / "tracking.png", OUT / "dashboard.png", metrics)
+
+    render_gif(OUT / "demo.gif", start_frame=1, end_frame=200,
+               every_n=5, gif_width=560)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,9 @@ A traffic camera at one intersection sees thousands of vehicles a day. Most of t
 
 It runs anywhere you have Python and a video file (or a webcam, or an RTSP stream). One command in, an annotated video and a CSV of every track out.
 
-![tracking demo](docs/img/tracking.png)
+![demo](docs/img/demo.gif)
+
+*Real output: YOLOv8n + IoU tracker on a public highway clip, 8 simultaneous IDs at peak, line-counter ticking over as cars cross.*
 
 ## What it does
 
@@ -19,19 +21,19 @@ The point is the analytics are decoupled from the source. Same code does cars on
 
 ## Quick look
 
-Tracking with IDs, motion trails, speed labels, and a counting line:
+Tracking with stable IDs and a counting line — eight vehicles tracked at once on a real highway:
 
 ![tracking](docs/img/tracking.png)
 
-Heatmap overlay showing where things spent time. Useful for spotting hotspots without staring at footage:
+Heatmap overlay showing where motion accumulated. The diagonal trails along the lanes are the real paths every tracked vehicle drove:
 
 ![heatmap](docs/img/heatmap.png)
 
-The Streamlit dashboard, with live preview and counts plotted as the video plays:
+The Streamlit dashboard, with live preview, metric cards, and counts plotted as the video plays:
 
 ![dashboard](docs/img/dashboard.png)
 
-> The first two screenshots are real captures from running this codebase on a public traffic clip ([intel-iot-devkit/sample-videos](https://github.com/intel-iot-devkit/sample-videos), MIT). Reproduce them with `python scripts/capture_real_screenshots.py` — the script auto-downloads the clip and the YOLOv8n weights. The dashboard image is a composed mockup of the Streamlit layout using the real tracking frame as its preview.
+> The screenshots and GIF above are real frames produced by this codebase. Source clip is the public Roboflow `vehicles.mp4` demo (4K highway footage, downscaled to 720p for processing). Reproduce them with `python scripts/capture_real_screenshots.py` — the script auto-downloads the video, fetches the YOLOv8n weights, and writes everything in `docs/img/`. The dashboard image composes the live tracking frame inside a mockup of the Streamlit layout.
 
 ## Getting started
 
