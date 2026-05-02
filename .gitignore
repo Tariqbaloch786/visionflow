@@ -1,0 +1,47 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# Models & media
+*.pt
+*.onnx
+*.engine
+runs/
+outputs/
+data/raw/
+data/processed/
+*.mp4
+*.avi
+*.mov
+!docs/**/*.mp4
+!docs/**/*.gif
+
+# OS
+.DS_Store
+Thumbs.db
