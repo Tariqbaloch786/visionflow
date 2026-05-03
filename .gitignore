@@ -45,7 +45,3 @@ data/processed/
 # OS
 .DS_Store
 Thumbs.db
-
-# Local tooling state (not for upstream)
-.claude/
-memory/
