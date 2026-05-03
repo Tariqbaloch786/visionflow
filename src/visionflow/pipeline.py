@@ -6,7 +6,7 @@ import logging
 import time
 from contextlib import ExitStack
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cv2
 
@@ -43,7 +43,7 @@ class Pipeline:
         self.line_counters = [LineCounter(c) for c in config.lines]
         self.speed = SpeedEstimator(config.speed)
         self._heatmap: HeatmapAccumulator | None = None
-        self._csv_writer: csv.writer | None = None
+        self._csv_writer: Any = None
         self._frame_idx = 0
         self._fps_ema = 0.0
 
@@ -112,7 +112,7 @@ class Pipeline:
                 if writer is None and out_cfg.video:
                     Path(out_cfg.video).parent.mkdir(parents=True, exist_ok=True)
                     h, w = frame.shape[:2]
-                    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                    fourcc = cv2.VideoWriter.fourcc(*"mp4v")
                     writer = cv2.VideoWriter(out_cfg.video, fourcc, 30.0, (w, h))
                 if writer is not None:
                     writer.write(frame)

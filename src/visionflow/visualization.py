@@ -7,8 +7,6 @@ import cv2
 import numpy as np
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
     from visionflow.analytics import LineCounter
     from visionflow.tracker import Track
 
@@ -19,11 +17,11 @@ def _color_for_id(track_id: int) -> tuple[int, int, int]:
 
 
 def draw_tracks(
-    frame: NDArray[np.uint8],
+    frame: np.ndarray,
     tracks: list[Track],
     speeds: dict[int, float] | None = None,
     show_trail: bool = True,
-) -> NDArray[np.uint8]:
+) -> np.ndarray:
     speeds = speeds or {}
     for t in tracks:
         x1, y1, x2, y2 = (int(v) for v in t.bbox)
@@ -46,7 +44,7 @@ def draw_tracks(
     return frame
 
 
-def draw_lines(frame: NDArray[np.uint8], counters: list[LineCounter]) -> NDArray[np.uint8]:
+def draw_lines(frame: np.ndarray, counters: list[LineCounter]) -> np.ndarray:
     for c in counters:
         a, b = c.config.start, c.config.end
         cv2.line(frame, a, b, (0, 200, 255), 2)
@@ -60,11 +58,11 @@ def draw_lines(frame: NDArray[np.uint8], counters: list[LineCounter]) -> NDArray
 
 
 def draw_hud(
-    frame: NDArray[np.uint8],
+    frame: np.ndarray,
     fps: float,
     n_tracks: int,
     extra: list[str] | None = None,
-) -> NDArray[np.uint8]:
+) -> np.ndarray:
     h, _ = frame.shape[:2]
     lines = [f"FPS: {fps:5.1f}", f"Active tracks: {n_tracks}"]
     if extra:

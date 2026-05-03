@@ -59,13 +59,13 @@ class OutputConfig(BaseModel):
 
 class PipelineConfig(BaseModel):
     source: str = "0"
-    detector: DetectorConfig = Field(default_factory=DetectorConfig)
+    detector: DetectorConfig = DetectorConfig()
     secondary_detector: DetectorConfig | None = None
-    tracker: TrackerConfig = Field(default_factory=TrackerConfig)
+    tracker: TrackerConfig = TrackerConfig()
     lines: list[LineConfig] = Field(default_factory=list)
-    speed: SpeedConfig = Field(default_factory=SpeedConfig)
-    heatmap: HeatmapConfig = Field(default_factory=HeatmapConfig)
-    output: OutputConfig = Field(default_factory=OutputConfig)
+    speed: SpeedConfig = SpeedConfig()
+    heatmap: HeatmapConfig = HeatmapConfig()
+    output: OutputConfig = OutputConfig()
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     @classmethod

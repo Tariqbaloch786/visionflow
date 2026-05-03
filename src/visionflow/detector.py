@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -32,7 +32,7 @@ class Detection:
 class Detector:
     def __init__(self, config: DetectorConfig) -> None:
         self.config = config
-        self._model = None
+        self._model: Any = None
         self._names: dict[int, str] = {}
 
     def _ensure_loaded(self) -> None:
@@ -52,7 +52,7 @@ class Detector:
 
     def __call__(self, frame: NDArray[np.uint8]) -> list[Detection]:
         self._ensure_loaded()
-        results = self._model.predict(  # type: ignore[union-attr]
+        results = self._model.predict(
             source=frame,
             conf=self.config.conf,
             iou=self.config.iou,

@@ -72,7 +72,7 @@ class SpeedEstimator:
         H, _ = cv2.findHomography(src, dst, method=0)
         if H is None:
             raise ValueError("Failed to compute speed homography from provided quad.")
-        return H
+        return H.astype(np.float64)
 
     def _project(self, pt: tuple[float, float]) -> tuple[float, float]:
         assert self._H is not None
@@ -142,4 +142,5 @@ class HeatmapAccumulator:
             return frame
         scaled = np.clip(norm / peak * 255.0, 0, 255).astype(np.uint8)
         colored = cv2.applyColorMap(scaled, cv2.COLORMAP_JET)
-        return cv2.addWeighted(frame, 1.0 - self.config.alpha, colored, self.config.alpha, 0)
+        blended = cv2.addWeighted(frame, 1.0 - self.config.alpha, colored, self.config.alpha, 0)
+        return blended.astype(np.uint8)
