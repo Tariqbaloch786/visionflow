@@ -29,10 +29,16 @@ def _open_capture(source: str) -> cv2.VideoCapture:
     return cap
 
 
+SECONDARY_CLASS_ID_OFFSET = 1000
+
+
 class Pipeline:
     def __init__(self, config: PipelineConfig) -> None:
         self.config = config
         self.detector = Detector(config.detector)
+        self.secondary_detector = (
+            Detector(config.secondary_detector) if config.secondary_detector is not None else None
+        )
         self.tracker = IoUTracker(config.tracker)
         self.line_counters = [LineCounter(c) for c in config.lines]
         self.speed = SpeedEstimator(config.speed)
@@ -47,6 +53,10 @@ class Pipeline:
 
     def _process_frame(self, frame):  # noqa: ANN001
         detections = self.detector(frame)
+        if self.secondary_detector is not None:
+            for d in self.secondary_detector(frame):
+                d.class_id += SECONDARY_CLASS_ID_OFFSET
+                detections.append(d)
         tracks = self.tracker.update(detections)
         speeds = self.speed.update(tracks)
         for c in self.line_counters:

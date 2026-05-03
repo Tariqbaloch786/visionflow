@@ -1,10 +1,25 @@
 source: "0"   # webcam; replace with a path or RTSP URL
 
+# Primary detector: IISc UVH-26 (YOLOv11-S fine-tuned on Indian traffic).
+# 14 vehicle classes including Three-wheeler (auto rickshaw), Bus, Truck,
+# Two-wheeler, Bicycle, Hatchback/Sedan/SUV/MUV/Van/LCV/Mini-bus/Tempo-traveller.
+# Run `python scripts/download_models.py` once to fetch the weights.
 detector:
+  weights: models/uvh26.pt
+  conf: 0.30
+  iou: 0.45
+  classes: null         # keep all 14 vehicle classes
+  imgsz: 640
+  device: cpu           # set to "0" if you have a CUDA GPU
+
+# Secondary detector: stock COCO YOLOv8n, restricted to person (class 0).
+# UVH-26 is vehicles-only, so this is what gives you pedestrian detection.
+# Remove this block if you don't need pedestrians (saves ~one inference per frame).
+secondary_detector:
   weights: yolov8n.pt
   conf: 0.30
   iou: 0.45
-  classes: [0, 1, 2, 3, 5, 7]   # COCO: person, bicycle, car, motorbike, bus, truck
+  classes: [0]          # COCO: person only
   imgsz: 640
   device: cpu
 

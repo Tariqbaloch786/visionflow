@@ -60,6 +60,7 @@ class OutputConfig(BaseModel):
 class PipelineConfig(BaseModel):
     source: str = "0"
     detector: DetectorConfig = Field(default_factory=DetectorConfig)
+    secondary_detector: DetectorConfig | None = None
     tracker: TrackerConfig = Field(default_factory=TrackerConfig)
     lines: list[LineConfig] = Field(default_factory=list)
     speed: SpeedConfig = Field(default_factory=SpeedConfig)

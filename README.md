@@ -21,19 +21,19 @@ The point is the analytics are decoupled from the source. Same code does cars on
 
 ## Quick look
 
-Tracking with stable IDs and a counting line — eight vehicles tracked at once on a real highway:
+Tracking with stable IDs and a counting line — mixed South Asian street traffic with auto rickshaws (`Three-wheeler`), trucks, sedans, two-wheelers and pedestrians all classified separately:
 
 ![tracking](docs/img/tracking.png)
 
-Heatmap overlay showing where motion accumulated. The diagonal trails along the lanes are the real paths every tracked vehicle drove:
+Heatmap overlay showing where motion accumulated over the clip. The trails trace the real paths every tracked vehicle and pedestrian drove or walked:
 
 ![heatmap](docs/img/heatmap.png)
 
-The Streamlit dashboard, with live preview, metric cards, and counts plotted as the video plays:
+A short loop of the live pipeline output:
 
-![dashboard](docs/img/dashboard.png)
+![demo](docs/img/demo.gif)
 
-> The screenshots and GIF above are real frames produced by this codebase. Source clip is the public Roboflow `vehicles.mp4` demo (4K highway footage, downscaled to 720p for processing). Reproduce them with `python scripts/capture_real_screenshots.py` — the script auto-downloads the video, fetches the YOLOv8n weights, and writes everything in `docs/img/`. The dashboard image composes the live tracking frame inside a mockup of the Streamlit layout.
+> The screenshots and GIF above are real frames produced by this codebase on a 13-second clip from Taxila, Pakistan. The pipeline runs the IISc UVH-26 detector (14 South Asian vehicle classes including `Three-wheeler`) for vehicles and stock `yolov8n.pt` restricted to `person` for pedestrians. Reproduce them with `python scripts/download_models.py && python scripts/capture_real_screenshots.py` — the capture script writes everything to `docs/img/`.
 
 ## Getting started
 
@@ -42,12 +42,21 @@ git clone https://github.com/Tariqbaloch786/visionflow
 cd visionflow
 pip install -e ".[app,dev]"
 
+# (optional, recommended) fetch the South Asian traffic detector weights
+python scripts/download_models.py
+
 # generate a starter config and run it
 visionflow init-config my.yaml
 visionflow run --config my.yaml --source path/to/video.mp4
 ```
 
 That's the whole thing. By default you'll get `outputs/run.mp4` (the annotated video) and `outputs/tracks.csv` (one row per track per frame).
+
+### Detection on South Asian traffic (auto rickshaws etc.)
+
+The COCO-trained `yolov8n.pt` has no class for three-wheelers, so an auto rickshaw gets misclassified as `truck`, `car`, or `motorcycle` depending on angle. To fix that, the sample config uses **IISc's UVH-26** (YOLOv11-S, fine-tuned on Indian traffic, 14 classes including Three-wheeler) as the primary detector, and runs stock `yolov8n.pt` as a secondary detector for the `person` class only — so you get accurate vehicle classes *and* pedestrians from the same pipeline.
+
+Run `python scripts/download_models.py` once to fetch the UVH-26 weights into `models/uvh26.pt`. To fall back to COCO-only, delete the `secondary_detector:` block in your config and point `detector.weights` at `yolov8n.pt`.
 
 If you'd rather use Docker:
 
