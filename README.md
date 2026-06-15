@@ -4,7 +4,7 @@ A traffic camera at one intersection sees thousands of vehicles a day. Most of t
 
 It runs anywhere you have Python and a video file (or a webcam, or an RTSP stream). One command in, an annotated video and a CSV of every track out.
 
-![demo](docs/img/demo.gif)
+![demo](docs/img/demo-highway.gif)
 
 *Real output: YOLOv8n + IoU tracker on a public highway clip, 8 simultaneous IDs at peak, line-counter ticking over as cars cross.*
 
@@ -23,17 +23,17 @@ The point is the analytics are decoupled from the source. Same code does cars on
 
 Tracking with stable IDs and a counting line — mixed South Asian street traffic with auto rickshaws (`Three-wheeler`), trucks, sedans, two-wheelers and pedestrians all classified separately:
 
-![tracking](docs/img/tracking.png)
+![tracking](docs/img/tracking-highway.png)
 
 Heatmap overlay showing where motion accumulated over the clip. The trails trace the real paths every tracked vehicle and pedestrian drove or walked:
 
-![heatmap](docs/img/heatmap.png)
+![heatmap](docs/img/heatmap-highway.png)
 
 A short loop of the live pipeline output:
 
-![demo](docs/img/demo.gif)
+![demo](docs/img/demo-highway.gif)
 
-> The screenshots and GIF above are real frames produced by this codebase on a 13-second clip from Taxila, Pakistan. The pipeline runs the IISc UVH-26 detector (14 South Asian vehicle classes including `Three-wheeler`) for vehicles and stock `yolov8n.pt` restricted to `person` for pedestrians. Reproduce them with `python scripts/download_models.py && python scripts/capture_real_screenshots.py` — the capture script writes everything to `docs/img/`.
+> The screenshots and GIF above are real frames produced by this codebase on a busy ~20-second highway clip from Taxila, Pakistan, with per-vehicle speed shown in km/h. The pipeline runs the IISc UVH-26 detector (14 South Asian vehicle classes including `Three-wheeler`) for vehicles and stock `yolov8n.pt` restricted to `person` for pedestrians; a rider on a two-wheeler is counted as one vehicle, not a duplicate person. Reproduce them with `python scripts/download_models.py && python scripts/capture_real_screenshots.py` — the capture script writes everything to `docs/img/`.
 
 ## Getting started
 
