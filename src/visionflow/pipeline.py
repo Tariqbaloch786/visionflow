@@ -31,6 +31,23 @@ def _open_capture(source: str) -> cv2.VideoCapture:
 
 SECONDARY_CLASS_ID_OFFSET = 1000
 
+# A person riding a two-wheeler is picked up by BOTH detectors (UVH-26 sees the
+# vehicle, COCO sees the rider). For traffic analytics a rider+bike is one object,
+# so we drop the person box when it sits mostly inside a two-wheeler/bicycle box.
+# A standalone pedestrian's box is not contained in any vehicle, so it survives.
+RIDER_VEHICLE_CLASSES = {"Two-wheeler", "Bicycle"}
+RIDER_CONTAINMENT = 0.5
+
+
+def _containment(inner: tuple[float, float, float, float],
+                 outer: tuple[float, float, float, float]) -> float:
+    """Fraction of the `inner` box's area that lies inside `outer`."""
+    ix1, iy1 = max(inner[0], outer[0]), max(inner[1], outer[1])
+    ix2, iy2 = min(inner[2], outer[2]), min(inner[3], outer[3])
+    inter = max(0.0, ix2 - ix1) * max(0.0, iy2 - iy1)
+    area = max(0.0, inner[2] - inner[0]) * max(0.0, inner[3] - inner[1])
+    return inter / area if area > 0 else 0.0
+
 
 class Pipeline:
     def __init__(self, config: PipelineConfig) -> None:
@@ -54,7 +71,10 @@ class Pipeline:
     def _process_frame(self, frame):  # noqa: ANN001
         detections = self.detector(frame)
         if self.secondary_detector is not None:
+            riders = [d.bbox for d in detections if d.class_name in RIDER_VEHICLE_CLASSES]
             for d in self.secondary_detector(frame):
+                if any(_containment(d.bbox, v) >= RIDER_CONTAINMENT for v in riders):
+                    continue  # rider on a two-wheeler — keep the vehicle, drop the person
                 d.class_id += SECONDARY_CLASS_ID_OFFSET
                 detections.append(d)
         tracks = self.tracker.update(detections)

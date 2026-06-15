@@ -24,9 +24,10 @@ env/
 coverage.xml
 htmlcov/
 
-# IDE
+# IDE / agent tooling
 .vscode/
 .idea/
+.claude/
 
 # Models & media
 *.pt
